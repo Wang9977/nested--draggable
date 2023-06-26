@@ -3,7 +3,7 @@
     <div class="single-card__head">
       <div class="single-card__head__title">{{ labelName }}</div>
       <div class="single-card__head__opt">
-        <p @click="toExpand" v-if="!tag.level">扩展</p>
+        <p @click="toExpand" >扩展</p>
         <p @click="toDel" style="margin-left:10px">删除</p>
 
       </div>
@@ -15,21 +15,27 @@
 </template>
 
 <script>
-import { computed } from '@vue/composition-api';
+import { computed,ref } from '@vue/composition-api';
 
+let groupId = 0
 export default {
   name:'SingleCard',
   props:{
     tag:Object,
     tree:Object,
+    level:Number,
   },
+
 
   setup(props,ctx){
     const labelName = computed(() => props.tag.name)
     const labelDesc = computed(() => props.tag.valueDesc)
 
+
+
     const toExpand = () => {
-      ctx.emit('onExpand',{...props.tag,level: 1})
+      ctx.emit('onExpand',{...props.tag,level: props.level,groupId:groupId})
+      groupId++
     }
 
     const toDel = () => {
@@ -39,6 +45,7 @@ export default {
 
 
     return {
+      groupId,
       labelDesc,
       labelName,
       toExpand,

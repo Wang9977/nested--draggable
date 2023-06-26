@@ -14,7 +14,7 @@
 importScripts("https://storage.googleapis.com/workbox-cdn/releases/4.3.1/workbox-sw.js");
 
 importScripts(
-  "/nested--draggable/precache-manifest.f763190af5c87dafca3fc1fb3cd2224c.js"
+  "/nested--draggable/precache-manifest.10366b50973424fa17c68c3190af5ede.js"
 );
 
 workbox.core.setCacheNameDetails({prefix: "nested-dragable"});

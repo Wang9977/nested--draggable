@@ -1,11 +1,11 @@
 <template>
   <section  class="tree-condition" :class="level>0 ? 'tree-display__bg' : ''">
     <div v-if="level && genTree.tags.length" class="tree-condition__head">
-      <div class="tree-condition__head__title">条件组</div>
+      <div class="tree-condition__head__title">条件组{{ level }}层，id：{{ localTree.groupId }}</div>
       <div @click="onDelGroup(genTree.tags)">删除</div>
     </div>
     <div class="tree-display" >
-      <template v-if="genTree.tags">
+      <template v-if="genTree.tags.length">
         <div class="tree-display__op" v-if="genTree.tags.length>1">
           <i class="op-line"></i>
           <div class="op-name" @click="changeOpt">{{ genTree.operator }}</div>
@@ -21,16 +21,16 @@
           >
           <div v-for="(tag, idx) in genTree.tags"  :key="tag.level+''+idx">
             <!-- 外层 -->
-            <div v-if="!tag.tags || !tag.tags.length" class="tag-item" >
-              <single-card  :tree="genTree" :tag="tag" :index="idx" :closable="false" @onExpand="onExpand" @onDel="onDel"/>
+            <div v-if="!tag.tags " class="tag-item" >
+              <single-card  :tree="genTree" :tag="tag" :index="idx" :closable="false" :level="level" @onExpand="onExpand" @onDel="onDel"/>
             </div>
-            <TreeCondition v-else :tree="tag" :level="level+1" @nodeChange="nodeChange" />
+            <TreeCondition v-else  :tree="tag" :level="level+1" @nodeChange="nodeChange"  />
           </div>
         </draggable>
         </div>
       </template>
       <template v-else-if="!genTree.tags">
-        <single-card :tree="tree" :tag="tree" :closable="false" @onDel="onDel"/>
+        <single-card :tree="tree" :tag="tree" :closable="false" @onDel="onDel" :level="level"/>
       </template>
     </div>
   </section>
@@ -52,13 +52,12 @@ export default {
   props: {
     tree: Object,
     level: Number,
-
-
+    groupId: Number
   },
   data(){
     return {
-      groupId: 1,
-      localTree: this.tree
+      localTree: this.tree,
+      // groupId:1
     }
   },
   computed: {
@@ -77,7 +76,16 @@ export default {
       return  this.tree
     }
   },
+  watch:{
+    // genTree:{
+    //   handler(tree){
+
+    //   },
+    //   deep:tree
+    // }
+  },
   methods:{
+
     onInput(val,genTree,level){
       this.$nextTick(()=> {
         this.localTree.tags = val
@@ -90,19 +98,20 @@ export default {
 
     onExpand(val){ // 扩展为条件框
       this.localTree?.tags?.forEach((e,idx) => {
-        if(e.uid === val.uid && !e.level){
+        if(e.uid === val.uid ){
           this.localTree.tags[idx] = {
-            level:1,
-            operator:'',
-            tags:[val]
+            level:val.level+1,
+            operator:'且',
+            tags:[{...val,level:val.level+1}],
+            groupId:val.groupId+1
           }
         }
       });
-      this.localTree.groupId = this.groupId
+      this.localTree.groupId = val.groupId
       this.$nextTick(()=>{
         this.$emit('nodeChange',this.localTree)
       })
-      this.groupId++
+
     },
     onDel(val){
       this.$nextTick(()=>{
@@ -110,16 +119,19 @@ export default {
         if(idx>-1){
           this.localTree.tags.splice(idx,1)
         }
-        this.$emit('nodeChange',this.tree)
+
+        this.$emit('nodeChange',this.localTree)
       })
     },
     onDelGroup(tags){
-      tags.forEach((it) => this.onDel(it))
+      this.localTree.tags=[]
+      this.nodeChange()
     },
     nodeChange(tree){
-      this.$nextTick(()=>{
-        this.$emit('nodeChange',this.tree)
-      })
+    console.log(tree,111)
+    if(!this.localTree?.tags?.length || (tree && !Object.keys(tree).length)) this.localTree= {}
+    console.log(this.localTree);
+    this.$emit('nodeChange',this.localTree)
     },
     addComponent(event,tags,level){
       // 当前组件 从外层添加到内层
@@ -141,6 +153,7 @@ export default {
 
     }
   },
+
 }
 </script>
 <style lang="scss" scoped>
