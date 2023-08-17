@@ -1,0 +1,30 @@
+// @import '../../../styles/vars.scss';
+
+$border-color-light: var(--border-color-light, #E8E8E8FF);
+$border-light: var(--border-light, 1px solid #E8E8E8FF);
+
+$font-size-mini: var(--font-size-mini, 12px);
+$color-primary: var(--color-primary, #333);
+// $color-text-secondary
+
+$color-label-tag-bg: var(--color-label-tag-bg, #F7F7FA);
+$color-label-tag-color: var(--color-label-tag-color, #000000);
+$color-label-tag-border: var(--color-label-tag-border, #E8E8EA);
+
+$color-operator-tag-bg: var(--color-label-tag-bg, #E6F6FF);
+$color-operator-tag-color: var(--color-label-tag-color, #007AFF);
+$color-operator-tag-border: var(--color-label-tag-border, #85C2FF);
+
+$color-tree-bg: var(--color-tree-bg, rgba(0,0,0, 0.04));
+
+$color-exisit-tag-bg: var(--color-label-tag-bg, #FFF8E6);
+$color-exisit-tag-color: var(--color-label-tag-color, #CF6E00);
+$color-exisit-tag-border: var(--color-label-tag-border, #FFD37A);
+
+$color-smart-tag-bg: var(--color-label-tag-bg, #E6FFFB);
+$color-smart-tag-color: var(--color-label-tag-color, #08979C);
+$color-smart-tag-border: var(--color-label-tag-border, #87E8DE);
+
+$color-upload-tag-bg: var(--color-label-tag-bg, #FFF0F6);
+$color-upload-tag-color: var(--color-label-tag-color, #CF6E00);
+$color-upload-tag-border: var(--color-label-tag-border, #FFADD2);
