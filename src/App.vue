@@ -12,14 +12,12 @@
 </template>
 
 <script>
-import CombineArea from './components/CombineArea.vue'
+
 import { ref,reactive } from '@vue/composition-api';
 
 export default {
   name: 'HelloWorld',
-  components: {
-    CombineArea
-  },
+
   setup(){
     let treeData =  reactive({level:0,operator:'且',tags:[]})
 

@@ -12,7 +12,9 @@ import VueCompositionApi from '@vue/composition-api'
 Vue.use(VueCompositionApi)
 Vue.use(ElementUI)
 /* eslint-disable no-new */
+
+import CombineArea from '@/components/index'
+Vue.use(CombineArea)
 new Vue({
-  // router,
   render: (h) => h(App)
 }).$mount('#app')

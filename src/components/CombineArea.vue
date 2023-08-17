@@ -1,4 +1,4 @@
-<template>
+<template >
   <tree-condition  :tree="tree" :level="0" @nodeChange="nodeChange" :key="id"  :groupId.sync="groupId"></tree-condition>
 </template>
 
