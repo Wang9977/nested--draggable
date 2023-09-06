@@ -5,9 +5,9 @@
   "author": "Wang9977",
   "license": "ISC",
   "private": false,
-  "main": "dist/nested-dragable.umd.min.js",
+  "main": "lib/nested-dragable.umd.min.js",
    "files": [
-        "dist",
+        "lib",
         "src"
     ],
   "scripts": {
@@ -15,7 +15,7 @@
     "start": "npm run serve",
     "lint": "vue-cli-service lint",
     "build": "vue-cli-service build",
-    "lib": "vue-cli-service build --target lib ./src/components/index.js"
+    "lib": "vue-cli-service build --target lib ./src/components/index.js --dest lib"
   },
   "dependencies": {
     "@vue/composition-api": "^1.4.2",
