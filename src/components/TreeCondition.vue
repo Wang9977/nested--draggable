@@ -191,14 +191,15 @@ export default {
     background: $color-tree-bg;
     padding: 16px;
     margin-bottom: 6px;
+    width: calc(100% - 32px);
   }
   &__op {
-    width: 40px;
+    // width: 40px;
     display: flex;
     flex-direction: row;
     align-items: center;
     justify-content: center;
-    padding: 14px 0 24px 12px;
+    padding: 14px 6px 24px 12px;
     .op-line {
       display: block;
       height: 100%;

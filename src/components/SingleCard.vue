@@ -61,7 +61,7 @@ export default {
 
 <style lang="scss" scoped>
 .single-card {
-  width: 100%;
+  width: calc(100% - 32px);
   background-color: #F7F7F7;
   border-radius: 8px;
   margin-bottom: 8px;

@@ -1,6 +1,6 @@
 <template>
   <div class="hello-world">
-    <div><el-button type="primary" @click="addLabel">添加</el-button></div>
+    <div><el-button type="primary" @click="addLabel">添加卡片</el-button></div>
     <!---
     <div><el-button type="primary" @click="changeEdit">编辑反显</el-button></div>
     --->
@@ -58,7 +58,7 @@ export default {
 <style lang="scss" scoped>
 .hello-world{
   .wrapper{
-    width: 360px;
+    width: 720px;
     border-radius: 8px;
     background-color: #fff;
     padding: 0 20px;
