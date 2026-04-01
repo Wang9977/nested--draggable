@@ -1,231 +1,230 @@
 <template>
-  <section  class="tree-condition" :class="level>0 ? 'tree-display__bg' : ''">
-    <div v-if="level && genTree.tags.length" class="tree-condition__head">
-      <div class="tree-condition__head__title">条件组{{ level }}层，id：{{ localTree.groupId }}</div>
-      <div @click="onDelGroup(genTree.tags)">删除</div>
+  <section class="tree" :class="`level-${level}`">
+    <div v-if="level && treeData.tags?.length" class="tree__header">
+      <span class="tree__tag">条件组 {{ level }}</span>
+      <span class="tree__del" @click="onDelGroup">删除组</span>
     </div>
-    <div class="tree-display" >
-      <template v-if="genTree.tags.length">
-        <div class="tree-display__op" v-if="genTree.tags.length>1">
-          <i class="op-line"></i>
-          <div class="op-name" @click="changeOpt">{{ genTree.operator }}</div>
-        </div>
-        <div class="tree-display__list">
-          <draggable
-            class="drag-wrapper"
-            :value="genTree.tags || []"
-            @input="onInput($event,genTree,level)"
-            @add="addComponent($event,genTree.tags,level)"
-            @remove="removeComponent($event,genTree.tags,level)"
-            v-bind="dragOption"
-          >
-          <div v-for="(tag, idx) in genTree.tags"  :key="tag.level+''+idx">
-            <!-- 外层 -->
-            <div v-if="!tag.tags " class="tag-item" >
-              <single-card  :tree="genTree" :tag="tag" :index="idx" :closable="false" :level="level" @onExpand="onExpand" @onDel="onDel"/>
+    
+    <div class="tree__body">
+      <div v-if="treeData.tags?.length > 1" class="tree__op">
+        <div class="tree__line"></div>
+        <button class="tree__btn" @click="changeOpt">{{ treeData.operator }}</button>
+        <div class="tree__line"></div>
+      </div>
+      
+      <draggable
+        :list="treeData.tags"
+        group="shared"
+        item-key="uid"
+        :animation="150"
+        class="tree__list"
+        ghost-class="ghost"
+        @change="onDragChange"
+      >
+        <template #item="{ element: tag }">
+          <div v-if="!tag.tags" class="item">
+            <div class="item__info">
+              <span class="item__title">{{ tag.name }}</span>
+              <span class="item__desc">{{ tag.valueDesc }}</span>
             </div>
-            <TreeCondition v-else  :tree="tag" :level="level+1" @nodeChange="nodeChange"  />
+            <div class="item__action">
+              <span class="item__link" @click="onExpand(tag)">扩展</span>
+              <span class="item__link item__link--del" @click="onDel(tag)">删除</span>
+            </div>
           </div>
-        </draggable>
-        </div>
-      </template>
-      <template v-else-if="!genTree.tags">
-        <single-card :tree="tree" :tag="tree" :closable="false" @onDel="onDel" :level="level"/>
-      </template>
+          <TreeCondition v-else :tree="tag" :level="level + 1" @nodeChange="handleChildChange" />
+        </template>
+      </draggable>
     </div>
   </section>
 </template>
-<script>
-import SingleCard from './SingleCard.vue'
-import Draggable from 'vuedraggable'
-import { cloneDeep } from 'lodash'
 
+<script setup>
+import { reactive, watch } from 'vue'
+import draggable from 'vuedraggable'
 
+const props = defineProps({
+  tree: Object,
+  level: Number
+})
 
-export default {
-  name: 'TreeCondition',
-  components: {
-    SingleCard,
-    TreeCondition: this,
-    Draggable
-  },
-  props: {
-    tree: Object,
-    level: Number,
-    groupId: Number
-  },
-  data(){
-    return {
-      localTree: this.tree,
-      // groupId:1
-    }
-  },
-  computed: {
-    dragOption () {
-      return {
-        animation: 50,
-        group: {
-          name: '1',
-          pull: true,
-          put: true
-        },
-        ghostClass: 'ghost'
-      }
-    },
-    genTree(){
-      return  this.tree
-    }
-  },
-  watch:{
-    // genTree:{
-    //   handler(tree){
+const emit = defineEmits(['nodeChange'])
+const treeData = reactive(props.tree)
 
-    //   },
-    //   deep:tree
-    // }
-  },
-  methods:{
+watch(() => props.tree, v => Object.assign(treeData, v), { deep: true, immediate: true })
 
-    onInput(val,genTree,level){
-      this.$nextTick(()=> {
-        this.localTree.tags = val
-        this.$emit('nodeChange',this.localTree)
-      })
-    },
-    changeOpt(){
-      this.localTree.operator = this.localTree.operator==='且'?'或':'且'
-    },
-
-    onExpand(val){ // 扩展为条件框
-      this.localTree?.tags?.forEach((e,idx) => {
-        if(e.uid === val.uid ){
-          this.localTree.tags[idx] = {
-            level:val.level+1,
-            operator:'且',
-            tags:[{...val,level:val.level+1}],
-            groupId:val.groupId+1
-          }
-        }
-      });
-      this.localTree.groupId = val.groupId
-      this.$nextTick(()=>{
-        this.$emit('nodeChange',this.localTree)
-      })
-
-    },
-    onDel(val){
-      this.$nextTick(()=>{
-        const idx = this.localTree?.tags?.findIndex(it=>it.uid===val.uid)
-        if(idx>-1){
-          this.localTree.tags.splice(idx,1)
-        }
-
-        this.$emit('nodeChange',this.localTree)
-      })
-    },
-    onDelGroup(tags){
-      this.localTree.tags=[]
-      this.nodeChange()
-    },
-    nodeChange(tree){
-    console.log(tree,111)
-    if(!this.localTree?.tags?.length || (tree && !Object.keys(tree).length)) this.localTree= {}
-    console.log(this.localTree);
-    this.$emit('nodeChange',this.localTree)
-    },
-    addComponent(event,tags,level){
-      // 当前组件 从外层添加到内层
-      if(level === 1){  // 当前组件  从外层添加到内层 将当前组件level置 1，同时增加且操作符
-        tags.forEach(it => it.level=level)
-        this.localTree.operator='且'
-      }
-      else if(level === 0 ){ // 当前组件 从内层添加到外层 将当前组件level置 0
-        this.$nextTick(()=>{
-          const idx = tags.findIndex(it=> it?.tags?.length===0)
-          if(idx>-1){
-            tags.splice(idx,1)
-          }
-        })
-        this.tree.tags.forEach(it => it.level=level)
-      }
-    },
-    removeComponent(event,tags,level){
-
-    }
-  },
-
+const changeOpt = () => {
+  treeData.operator = treeData.operator === '且' ? '或' : '且'
 }
+
+const onExpand = (tag) => {
+  const i = treeData.tags.findIndex(t => t.uid === tag.uid)
+  if (i > -1) {
+    treeData.tags[i] = {
+      level: tag.level + 1,
+      operator: '且',
+      tags: [{ ...tag, level: tag.level + 1 }],
+      groupId: (tag.groupId || 0) + 1
+    }
+    emit('nodeChange', treeData)
+  }
+}
+
+const onDel = (tag) => {
+  const i = treeData.tags.findIndex(t => t.uid === tag.uid)
+  if (i > -1) {
+    treeData.tags.splice(i, 1)
+    emit('nodeChange', treeData)
+  }
+}
+
+const onDelGroup = () => {
+  treeData.tags = []
+  emit('nodeChange', treeData)
+}
+
+const onDragChange = () => emit('nodeChange', treeData)
+const handleChildChange = () => emit('nodeChange', treeData)
 </script>
-<style lang="scss" scoped>
-@import './style-var.scss';
 
-.tree-condition {
+<style lang="scss">
+.tree {
+  margin-bottom: 12px;
   border-radius: 8px;
-  width:100%;
+  padding: 16px;
 
-  &__head {
-    display:flex;
+  &.level-1 { background: rgba(0, 0, 0, 0.01); border: 1px solid rgba(0, 0, 0, 0.06); }
+  &.level-2 { background: rgba(0, 0, 0, 0.03); border: 1px solid rgba(0, 0, 0, 0.08); }
+  &.level-3 { background: rgba(0, 0, 0, 0.05); border: 1px solid rgba(0, 0, 0, 0.10); }
+  &.level-4 { background: rgba(0, 0, 0, 0.08); border: 1px solid rgba(0, 0, 0, 0.12); }
+  &.level-5 { background: rgba(0, 0, 0, 0.10); border: 1px solid rgba(0, 0, 0, 0.14); }
+  &.level-6 { background: rgba(0, 0, 0, 0.12); border: 1px solid rgba(0, 0, 0, 0.16); }
+
+  &__header {
+    display: flex;
     justify-content: space-between;
     align-items: center;
+    margin-bottom: 12px;
+  }
+
+  &__tag {
     font-size: 12px;
-    margin-bottom: 4px;
-
-
-
-    &__title {
-      font-weight: 500;
-      font-size: 14px;
-      height: 20px;
-      line-height: 20px;
-    }
+    color: #666;
+    font-weight: 500;
+    background: rgba(0, 0, 0, 0.04);
+    padding: 2px 8px;
+    border-radius: 4px;
   }
 
-.tree-display {
-  display: flex;
-  flex-direction: row;
-
-  border-radius: 12px;
-  margin-bottom: 6px;
-
-  &__bg {
-    background: $color-tree-bg;
-    padding: 16px;
-    margin-bottom: 6px;
-    width: calc(100% - 32px);
+  &__del {
+    font-size: 12px;
+    color: #999;
+    cursor: pointer;
+    &:hover { color: #333; }
   }
-  &__op {
-    // width: 40px;
+
+  &__body {
     display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: center;
-    padding: 14px 6px 24px 12px;
-    .op-line {
-      display: block;
-      height: 100%;
-      border: 1px solid #4D80F0;
-      border-right: none;
-      width: 15px;
-    }
-    .op-name {
-      margin-left: -26px;
-      background: $color-primary;
-      color: #fff;
-      display: block;
-      width: 24px;
-      height: 24px;
-      border-radius: 4px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: $font-size-mini;
-    }
+    gap: 12px;
   }
-  &__list {
+
+  &__op {
     display: flex;
     flex-direction: column;
+    align-items: center;
+    padding: 0 8px;
+  }
+
+  &__line {
+    width: 2px;
     flex: 1;
+    min-height: 16px;
+    background: #999;
+    opacity: 0.4;
+  }
+
+  &__btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #666;
+    color: #fff;
+    border: none;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    flex-shrink: 0;
+    margin: 4px 0;
+
+    &:hover {
+      background: #333;
+    }
+  }
+
+  &__list {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-height: 40px;
   }
 }
+
+.item {
+  display: flex;
+  align-items: center;
+  background: #fff;
+  border: 1px solid #e5e5e5;
+  border-radius: 6px;
+  padding: 10px 14px;
+  cursor: grab;
+  transition: all 0.15s;
+
+  &:hover {
+    background: #fafafa;
+    border-color: #d9d9d9;
+  }
+
+  &__info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  &__title {
+    font-size: 13px;
+    font-weight: 500;
+    color: #1a1a1a;
+  }
+
+  &__desc {
+    font-size: 12px;
+    color: #999;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__action {
+    display: flex;
+    gap: 12px;
+    margin-left: 16px;
+  }
+
+  &__link {
+    font-size: 12px;
+    color: #666;
+    cursor: pointer;
+    &:hover { color: #333; }
+    &--del:hover { color: #ff4d4f; }
+  }
+}
+
+.ghost {
+  background: #f0f0f0;
+  border: 2px dashed #999;
+  border-radius: 6px;
 }
 </style>
