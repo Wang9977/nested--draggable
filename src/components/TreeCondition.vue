@@ -19,7 +19,10 @@
         :animation="150"
         class="tree__list"
         ghost-class="ghost"
+        @start="onDragStart"
+        @end="onDragEnd"
         @change="onDragChange"
+        :move="onMove"
       >
         <template #item="{ element: tag }">
           <div v-if="!tag.tags" class="item">
@@ -28,11 +31,11 @@
               <span class="item__desc">{{ tag.valueDesc }}</span>
             </div>
             <div class="item__action">
-              <span class="item__link" @click="onExpand(tag)">扩展</span>
+              <span v-if="tag.level < maxLevel" class="item__link" @click="onExpand(tag)">扩展</span>
               <span class="item__link item__link--del" @click="onDel(tag)">删除</span>
             </div>
           </div>
-          <TreeCondition v-else :tree="tag" :level="level + 1" @nodeChange="handleChildChange" />
+          <TreeCondition v-else :tree="tag" :level="level + 1" :maxLevel="maxLevel" :getNextGroupId="getNextGroupId" @nodeChange="handleChildChange" @exceedMaxLevel="onExceedMaxLevel" />
         </template>
       </draggable>
     </div>
@@ -40,22 +43,67 @@
 </template>
 
 <script setup>
-import { reactive, watch } from 'vue'
+import { reactive, watch, inject } from 'vue'
 import draggable from 'vuedraggable'
 
 const props = defineProps({
   tree: Object,
-  level: Number
+  level: Number,
+  maxLevel: {
+    type: Number,
+    default: 5
+  },
+  getNextGroupId: Function
 })
 
-const emit = defineEmits(['nodeChange'])
+const emit = defineEmits(['nodeChange', 'exceedMaxLevel'])
 const treeData = reactive(props.tree)
+let dragItem = null
 
 watch(() => props.tree, v => Object.assign(treeData, v), { deep: true, immediate: true })
+
+const onDragStart = (evt) => {
+  dragItem = evt.item._underlying_vm_
+}
+
+const onDragEnd = () => {
+  dragItem = null
+}
+
+const onMove = (evt) => {
+  const draggedContext = evt.draggedContext
+  const relatedContext = evt.relatedContext
+  
+  if (draggedContext.element.tags) {
+    let maxLevel = 1
+    const checkLevels = (tags, level) => {
+      tags.forEach(tag => {
+        if (tag.tags) {
+          checkLevels(tag.tags, level + 1)
+        } else {
+          maxLevel = Math.max(maxLevel, (tag.level || 1) + level)
+        }
+      })
+    }
+    checkLevels([draggedContext.element], 1)
+    
+    if (relatedContext.component.$parent) {
+      const targetLevel = relatedContext.component.$parent.level || 0
+      const cardLevel = targetLevel + maxLevel
+      if (cardLevel > props.maxLevel) {
+        emit('exceedMaxLevel')
+        return false
+      }
+    }
+  }
+  return true
+}
 
 const changeOpt = () => {
   treeData.operator = treeData.operator === '且' ? '或' : '且'
 }
+
+const getNextGroupId = inject('getNextGroupId', props.getNextGroupId || (() => 1))
 
 const onExpand = (tag) => {
   const i = treeData.tags.findIndex(t => t.uid === tag.uid)
@@ -64,7 +112,7 @@ const onExpand = (tag) => {
       level: tag.level + 1,
       operator: '且',
       tags: [{ ...tag, level: tag.level + 1 }],
-      groupId: (tag.groupId || 0) + 1
+      groupId: getNextGroupId()
     }
     emit('nodeChange', treeData)
   }
@@ -83,7 +131,67 @@ const onDelGroup = () => {
   emit('nodeChange', treeData)
 }
 
-const onDragChange = () => emit('nodeChange', treeData)
+const onDragChange = (evt) => {
+  if (evt.added) {
+    const addedItem = evt.added.element
+    if (addedItem.tags) {
+      const maxCardLevel = getMaxCardLevel(addedItem) + props.level + 1
+      if (maxCardLevel > props.maxLevel) {
+        treeData.tags = originalTreeData.tags
+        emit('exceedMaxLevel')
+        return
+      }
+      updateGroupLevels(addedItem, props.level + 1)
+    } else {
+      addedItem.level = props.level + 1
+    }
+  } else if (evt.removed) {
+    evt.removed.element.level = 1
+  } else if (evt.moved) {
+    updateCardLevels(treeData.tags, props.level + 1)
+  }
+  emit('nodeChange', treeData)
+}
+
+const getMaxCardLevel = (group) => {
+  let max = 0
+  if (group.tags) {
+    group.tags.forEach(tag => {
+      if (tag.tags) {
+        const childMax = getMaxCardLevel(tag)
+        max = Math.max(max, childMax)
+      } else {
+        max = Math.max(max, tag.level || 1)
+      }
+    })
+  }
+  return max
+}
+
+const updateGroupLevels = (group, level) => {
+  group.level = level
+  if (group.tags) {
+    group.tags.forEach(tag => {
+      if (tag.tags) {
+        updateGroupLevels(tag, level + 1)
+      } else {
+        tag.level = level + 1
+      }
+    })
+  }
+}
+
+const updateCardLevels = (tags, level) => {
+  tags.forEach(tag => {
+    if (tag.tags) {
+      updateCardLevels(tag.tags, level + 1)
+    } else {
+      tag.level = level
+    }
+  })
+}
+
+const onExceedMaxLevel = () => emit('exceedMaxLevel')
 const handleChildChange = () => emit('nodeChange', treeData)
 </script>
 

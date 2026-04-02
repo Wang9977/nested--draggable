@@ -2,20 +2,33 @@
   <TreeCondition 
     :tree="tree" 
     :level="0" 
+    :maxLevel="maxLevel"
+    :getNextGroupId="getNextGroupId"
     @nodeChange="handleNodeChange"
+    @exceedMaxLevel="onExceedMaxLevel"
   />
 </template>
 
 <script setup>
-import { reactive, watch, nextTick } from 'vue'
+import { reactive, watch, provide } from 'vue'
 import TreeCondition from './TreeCondition.vue'
 
 const props = defineProps({
   initTreeData: Object,
-  isEdit: Boolean
+  isEdit: Boolean,
+  maxLevel: {
+    type: Number,
+    default: 5
+  }
 })
 
-const groupId = ref(1)
+let groupIdCounter = 1
+
+const getNextGroupId = () => {
+  return groupIdCounter++
+}
+
+provide('getNextGroupId', getNextGroupId)
 
 const tree = reactive(props.initTreeData || {
   level: 0,
@@ -58,5 +71,9 @@ const handleNodeChange = () => {
   filterNode(tree)
 }
 
-import { ref } from 'vue'
+const emit = defineEmits(['exceedMaxLevel'])
+
+const onExceedMaxLevel = () => {
+  emit('exceedMaxLevel')
+}
 </script>
