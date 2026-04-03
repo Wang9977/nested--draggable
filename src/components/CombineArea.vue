@@ -53,6 +53,10 @@ const filterNode = (treeNode) => {
   }
 }
 
+const handleNodeChange = () => {
+  filterNode(tree)
+}
+
 const delTree = (treeNode, targetGroupId, targetLevel) => {
   if (treeNode.tags) {
     const idx = treeNode.tags.findIndex(item => item.groupId === targetGroupId && item.level === targetLevel)
@@ -65,10 +69,6 @@ const delTree = (treeNode, targetGroupId, targetLevel) => {
       }
     }
   }
-}
-
-const handleNodeChange = () => {
-  filterNode(tree)
 }
 
 const emit = defineEmits(['exceedMaxLevel'])
